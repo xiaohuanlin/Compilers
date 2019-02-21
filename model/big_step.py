@@ -16,6 +16,9 @@ class Number(Expression):
         # we can't evaluate it to have a valid value, so visit its value property
         return self
 
+    def to_python(self):
+        return f'lambda env: {self.value}'
+
 
 class Boolean(Expression):
     def __init__(self, value):
@@ -27,6 +30,9 @@ class Boolean(Expression):
     def evaluate(self, env):
         return self
 
+    def to_python(self):
+        return f'lambda env: {self.value}'
+
 
 class Variable(Expression):
     def __init__(self, name):
@@ -37,6 +43,9 @@ class Variable(Expression):
 
     def evaluate(self, env):
         return env[self.name]
+
+    def to_python(self):
+        return f'lambda env: env["{self.name}"]'
 
 
 class Add(Expression):
@@ -50,6 +59,9 @@ class Add(Expression):
     def evaluate(self, env):
         return Number(self.left.evaluate(env).value + self.right.evaluate(env).value)
 
+    def to_python(self):
+        return f'lambda env: ({self.left.to_python()})(env) + ({self.right.to_python()})(env)'
+
 
 class Multiply(Expression):
     def __init__(self, left, right):
@@ -61,6 +73,9 @@ class Multiply(Expression):
 
     def evaluate(self, env):
         return Number(self.left.evaluate(env).value * self.right.evaluate(env).value)
+
+    def to_python(self):
+        return f'lambda env: ({self.left.to_python()})(env) * ({self.right.to_python()})(env)'
 
 
 class LessThan(Expression):
@@ -75,6 +90,9 @@ class LessThan(Expression):
         left_value = self.left.evaluate(env).value
         right_value = self.right.evaluate(env).value
         return Boolean(left_value < right_value)
+
+    def to_python(self):
+        return f'lambda env: ({self.left.to_python()})(env) < ({self.right.to_python()})(env)'
 
 
 class Statement:
@@ -92,6 +110,9 @@ class DoNothing(Statement):
     def evaluate(self, env):
         return env
 
+    def to_python(self):
+        return 'lambda env: env'
+
 
 class Assign(Statement):
 
@@ -106,6 +127,9 @@ class Assign(Statement):
         new_env = deepcopy(env)
         new_env[self.name] = self.expression.evaluate(env)
         return new_env
+
+    def to_python(self):
+        return f'lambda env: dict([pair for pair in env.items() if pair[0] != "{self.name}"] + [("{self.name}", ({self.expression.to_python()})(env))])'
 
 
 class IF(Statement):
@@ -125,6 +149,9 @@ class IF(Statement):
         else:
             return self.alternative.evaluate(env)
 
+    def to_python(self):
+        return f'lambda env: ({self.consequence.to_python()})(env) if ({self.condition.to_python()})(env) else ({self.alternative.to_python()})(env)'
+
 
 class Sequence(Statement):
 
@@ -139,6 +166,9 @@ class Sequence(Statement):
         new_env = self.first.evaluate(env)
         new_env = self.second.evaluate(new_env)
         return new_env
+
+    def to_python(self):
+        return f'lambda env: ({self.second.to_python()})(({self.first.to_python()})(env))'
 
 
 class While(Statement):
@@ -157,6 +187,9 @@ class While(Statement):
             return self.evaluate(new_env)
         else:
             return env
+
+    def to_python(self):
+        return f'lambda env: ({self.to_python()})(({self.body.to_python()})(env)) if ({self.condition.to_python()})(env) else env'
 
 
 class Machine:

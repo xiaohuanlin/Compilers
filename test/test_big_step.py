@@ -89,5 +89,44 @@ class ModelTestCase(unittest.TestCase):
                          "{'x': <9>}\n"
                          )
 
+    def test_to_python(self):
+        func = eval(Number(5).to_python())
+        self.assertEqual(func({}),
+                         5)
+        func = eval(Boolean(True).to_python())
+        self.assertEqual(func({}),
+                         True)
+        func = eval(Variable('x').to_python())
+        self.assertEqual(func({'x': 5}),
+                         5)
+        func = eval(Add(Variable('x'), Number(5)).to_python())
+        self.assertEqual(func({'x': 5}),
+                         10)
+        func = eval(Multiply(Variable('x'), Number(5)).to_python())
+        self.assertEqual(func({'x': 5}),
+                         25)
+        func = eval(LessThan(Variable('x'), Number(3)).to_python())
+        self.assertEqual(func({'x': 5}),
+                         False)
+        func = eval(Assign('x', Number(3)).to_python())
+        self.assertEqual(func({'x': 5}),
+                         {'x': 3})
+        func = eval(IF(
+                        Variable('x'),
+                        Assign('y', Number(1)),
+                        Assign('y', Number(2))
+                    ).to_python())
+        self.assertEqual(func({'x': 5}),
+                         {'x': 5, 'y': 1})
+        func = eval(Sequence(Assign('x', Add(Number(1), Variable('x'))),
+                             Assign('x', Multiply(Number(2), Variable('x')))).to_python())
+        self.assertEqual(func({'x': 2}),
+                         {'x': 6})
+        # func = eval(While(
+        #                 LessThan(Variable('x'), Number(5)),
+        #                 Assign('x', Multiply(Variable('x'), Number(3)))
+        #                 ).to_python())
+        # self.assertEqual(func({'x': 2}),
+        #                  {'x': 6})
 
 
