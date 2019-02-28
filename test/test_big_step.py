@@ -112,21 +112,20 @@ class ModelTestCase(unittest.TestCase):
         self.assertEqual(func({'x': 5}),
                          {'x': 3})
         func = eval(IF(
-                        Variable('x'),
-                        Assign('y', Number(1)),
-                        Assign('y', Number(2))
-                    ).to_python())
+            Variable('x'),
+            Assign('y', Number(1)),
+            Assign('y', Number(2))
+        ).to_python())
         self.assertEqual(func({'x': 5}),
                          {'x': 5, 'y': 1})
         func = eval(Sequence(Assign('x', Add(Number(1), Variable('x'))),
                              Assign('x', Multiply(Number(2), Variable('x')))).to_python())
         self.assertEqual(func({'x': 2}),
                          {'x': 6})
-        # func = eval(While(
-        #                 LessThan(Variable('x'), Number(5)),
-        #                 Assign('x', Multiply(Variable('x'), Number(3)))
-        #                 ).to_python())
-        # self.assertEqual(func({'x': 2}),
-        #                  {'x': 6})
-
-
+        func = lambda env: \
+            exec(While(
+                LessThan(Variable('x'), Number(5)),
+                Assign('x', Multiply(Variable('x'), Number(3)))
+            ).to_python() % env)
+        func({'x': 2})
+        self.assertEqual(globals()['env'], {'x': 6})

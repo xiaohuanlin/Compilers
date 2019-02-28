@@ -189,7 +189,12 @@ class While(Statement):
             return env
 
     def to_python(self):
-        return f'lambda env: ({self.to_python()})(({self.body.to_python()})(env)) if ({self.condition.to_python()})(env) else env'
+        return f'def while_f(env):' \
+            f'\n\r\twhile ({self.condition.to_python()})(env): ' \
+            f'\n\r\t\tenv = ({self.body.to_python()})(env) ' \
+            f'\n\r\treturn env ' \
+            f'\n\rglobal env ' \
+            f'\n\renv = while_f(%s)'
 
 
 class Machine:
